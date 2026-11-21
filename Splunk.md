@@ -58,6 +58,7 @@ index=case-windows-logs sourcetype=system_logs host.name="qqqiw8j9k73e*" event.c
 | sort first
 
 With DNS ID 22
+
 index=case-windows-logs host.name="qqqisvdc4*" process.name="node.exe" event.code IN (3, 22)
 | fillnull value="-" dns.question.name destination.ip destination.port
 | stats count earliest(_time) as first latest(_time) as last values(dns.resolve_ip{}) as resolved
@@ -66,6 +67,19 @@ index=case-windows-logs host.name="qqqisvdc4*" process.name="node.exe" event.cod
 | sort first
 
 Note: stats ... by drops every event where any of the by fields is empty, reason we add "-" to empty value
+
+Excluding some IP from DNS search
+
+index=case-windows-logs host.name IN ("qqqiw8j9k73e*", "qqqisvdc4*") process.name="node.exe" event.code=3
+    NOT destination.ip IN ("10.*", "192.168.*", "172.16.*", "127.*")
+    NOT [ search index=case-windows-logs process.name="node.exe" event.code=22 dns.question.name="*eth*"
+          | rename "dns.resolve_ip{}" as destination.ip
+          | mvexpand destination.ip
+          | dedup destination.ip
+          | fields destination.ip ]
+| stats count earliest(_time) as first latest(_time) as last by host.name, destination.ip, destination.port
+| convert ctime(first) ctime(last)
+| sort first
 
 ## Authentication RDP from 10.85.47.70
 index=case-windows-logs host.name="qqqisVDC4*" source.ip="10.85.47.70"
