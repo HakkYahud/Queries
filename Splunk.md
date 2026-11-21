@@ -69,3 +69,10 @@ index=case-windows-logs host.name IN ("qqqisvdc4*", "qqqisvdc7*")
     earliest="01/15/2026:00:00:00"
 | table _time, host.name, event.code, user.name, winlog.event_data.TargetUserName, winlog.event_data.SubjectUserName
 | sort _time
+
+## Credential Dumping
+index=case-windows-logs host.name IN ("qqqisvdc4*", "qqqisvdc7*") earliest="01/15/2026:00:00:00"
+    ((event.code IN (1, 4688) process.command_line IN ("*ntdsutil*", "*vssadmin*", "*esentutl*", "*reg* save*", "*comsvcs*MiniDump*", "*procdump*", "*sekurlsa*", "*lsass*"))
+     OR (event.code=10 "lsass.exe"))
+| table _time, host.name, event.code, user.name, process.name, process.command_line
+| sort _time
