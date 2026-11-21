@@ -50,6 +50,13 @@ index=case-windows-logs sourcetype=system_logs event.code=1
 | convert ctime(first)
 | sort first
 
+## Network Connection sysmon ID 3
+index=case-windows-logs sourcetype=system_logs host.name="qqqiw8j9k73e*" event.code=3
+    earliest="01/15/2026:00:07:00" latest="01/15/2026:00:15:00"
+| stats count earliest(_time) as first by process.name, process.pid, destination.ip, destination.port
+| convert ctime(first)
+| sort first
+
 ## Authentication RDP from 
 index=case-windows-logs host.name="qqqisVDC4*" source.ip="10.85.47.70"
     event.code=4624 winlog.event_data.LogonType=10
