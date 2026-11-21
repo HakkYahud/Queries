@@ -57,9 +57,15 @@ index=case-windows-logs sourcetype=system_logs host.name="qqqiw8j9k73e*" event.c
 | convert ctime(first)
 | sort first
 
-## Authentication RDP from 
+## Authentication RDP from 10.85.47.70
 index=case-windows-logs host.name="qqqisVDC4*" source.ip="10.85.47.70"
     event.code=4624 winlog.event_data.LogonType=10
 | table _time, user.name, source.ip, winlog.event_data.LogonType
 | sort _time
 
+## Account changes
+index=case-windows-logs host.name IN ("qqqisvdc4*", "qqqisvdc7*")
+    event.code IN (4720, 4722, 4723, 4724, 4728, 4732, 4738, 4756)
+    earliest="01/15/2026:00:00:00"
+| table _time, host.name, event.code, user.name, winlog.event_data.TargetUserName, winlog.event_data.SubjectUserName
+| sort _time
