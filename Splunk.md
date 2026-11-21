@@ -4,6 +4,12 @@
 Know the field per sourcetype, in this example what are the fields in stream:http
 index=botsv1 sourcetype=stream:http | fieldsummary | table field count distinct_count values
 
+## Field Summary
+index=case-windows-logs process.name="node.exe" event.code=22 dns.question.name="*eth*"
+| fieldsummary
+| search field="dns.*"
+| table field count
+
 ## DNS logs 
 index=botsv1 sourcetype=stream:dns src_ip="192.168.250.100"
 | rename "query{}" as query
@@ -50,7 +56,7 @@ index=case-windows-logs sourcetype=system_logs event.code=1
 | convert ctime(first)
 | sort first
 
-## Network Connection sysmon ID 3
+## Network Connection
 index=case-windows-logs sourcetype=system_logs host.name="qqqiw8j9k73e*" event.code=3
     earliest="01/15/2026:00:07:00" latest="01/15/2026:00:15:00"
 | stats count earliest(_time) as first by process.name, process.pid, destination.ip, destination.port
