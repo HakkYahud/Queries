@@ -14,6 +14,8 @@ index=botsv1 sourcetype=stream:dns src_ip="192.168.250.100"
 
 
 ## Process Tree
+
+### On suspicious path
 index=botsv1 sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventCode=1
 | search Image IN ("*\\Temp\\*", "*\\AppData\\*", "*\\Users\\Public\\*", "*\\ProgramData\\*")
 | join type=left ParentProcessGuid
@@ -26,4 +28,25 @@ index=botsv1 sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" Ev
 | eval chain=coalesce(gp,"?")." → ".p." → ".c
 | stats count values(CommandLine) as cmdlines by host chain, GrandParentId, ParentProcessId, ProcessId
 | sort count
+
+### Using different index and sourcetype as an example
+### General One
+index=case-windows-logs sourcetype=system_logs event.code=1
+| rename process.entity_id as guid, process.parent.entity_id as pguid,
+         process.parent.executable as ParentImage, process.parent.pid as ParentPid,
+         process.command_line as CommandLine, process.name as Child, process.pid as Pid
+| join type=left pguid
+    [ search index=case-windows-logs sourcetype=system_logs event.code=1
+    | rename process.entity_id as pguid,
+             process.parent.executable as GrandParentImage, process.parent.pid as GrandParentPid
+    | fields pguid GrandParentImage GrandParentPid ]
+| eval gp=mvindex(split(GrandParentImage,"\\"),-1),
+       p=mvindex(split(ParentImage,"\\"),-1)
+| eval chain=coalesce(gp,"?")." → ".coalesce(p,"?")." → ".coalesce(Child,"?")
+| search chain="*node.exe*"
+| fillnull value="-" GrandParentPid ParentPid CommandLine
+| stats count earliest(_time) as first values(CommandLine) as cmdlines
+    by host.hostname, user.name, chain, GrandParentPid, ParentPid, Pid
+| convert ctime(first)
+| sort first
 
